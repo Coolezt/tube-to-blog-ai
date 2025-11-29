@@ -1,0 +1,87 @@
+jsximport { useState } from 'react';
+
+export default function Home() {
+  const [url, setUrl] = useState('');
+  const [output, setOutput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const generatePost = async () => {
+    if (!url) return alert('Enter a YouTube URL!');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOutput(data.draft + '\n\n' + data.tips);
+      } else {
+        setOutput('Error: ' + data.error);
+      }
+    } catch (err) {
+      setOutput('Error: ' + err.message);
+    }
+    setLoading(false);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(output);
+    alert('Copied to clipboard!');
+  };
+
+  return (
+    <div className={`${darkMode ? 'dark' : ''} min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors`}>
+      <header className="bg-blue-600 text-white p-4">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold">TubeToBlog AI 🔥</h1>
+          <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded bg-white text-blue-600">
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto p-6">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold mb-4">Turn YouTube Videos into Blog Posts – Free & Instant</h2>
+          <p className="text-lg mb-6">Paste a URL, get a full SEO draft. No login needed.</p>
+        </div>
+
+        <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg mb-6">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className="w-full p-3 mb-4 border rounded dark:bg-gray-700"
+          />
+          <button
+            onClick={generatePost}
+            disabled={loading}
+            className="bg-blue-600 text-white px-6 py-3 rounded mr-4 disabled:opacity-50"
+          >
+            {loading ? 'Generating...' : 'Generate Post'}
+          </button>
+          {output && (
+            <button onClick={copyToClipboard} className="bg-green-600 text-white px-6 py-3 rounded">
+              Copy Draft
+            </button>
+          )}
+        </div>
+
+        {output && (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border">
+            <h3 className="text-xl font-bold mb-4">Your Generated Blog Post:</h3>
+            <pre className="whitespace-pre-wrap overflow-auto">{output}</pre>
+          </div>
+        )}
+      </main>
+
+      <footer className="bg-gray-200 dark:bg-gray-700 p-4 text-center">
+        <p>Powered by OpenAI & YouTube. Built with ❤️ for creators.</p>
+      </footer>
+    </div>
+  );
+}
